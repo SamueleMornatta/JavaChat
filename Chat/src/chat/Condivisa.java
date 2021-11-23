@@ -6,6 +6,7 @@
 package chat;
 
 import java.util.ArrayList;
+import javax.swing.JFrame;
 
 /**
  *
@@ -14,14 +15,15 @@ import java.util.ArrayList;
 public class Condivisa {
     private static ArrayList<Message> chatmessages;
     private static boolean isnew;
+    private static ChatFrame frame;
     private static Condivisa instance = null; 
-    private Condivisa() {}
+    public Condivisa(ChatFrame frame) {
+        this.frame = frame;
+        chatmessages = new ArrayList<Message>();
+        isnew = false;
+        instance = this;
+    }
     public static Condivisa getInstance() {
-        if (instance == null) {
-            instance = new Condivisa();
-            chatmessages = new ArrayList<Message>();
-            isnew = false;
-        }
         return instance;
     }
     public synchronized void appendMessage(Message nuovo){
@@ -38,5 +40,9 @@ public class Condivisa {
         boolean tmp = isnew;
         isnew = false;
         return tmp;
+    }
+
+    public synchronized ChatFrame getFrame() {
+        return frame;
     }
 }

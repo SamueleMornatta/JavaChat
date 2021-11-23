@@ -14,6 +14,7 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JFrame;
 
 /**
  *
@@ -29,7 +30,18 @@ public class Connection extends Thread{
     String mes;
     Condivisa cond;
     ThreadChat ct;
-
+    ChatFrame frame;
+    DatagramPacket replyPacket;
+    
+    public Connection(){
+        otherNick = "unkown";
+        connection = false;
+        tosend = false;
+        mes = "";
+        cond = Condivisa.getInstance();
+        ct = new ThreadChat();
+        frame = cond.getFrame();
+    }
     public Connection(DatagramSocket server, String ip, String nickname) {
         this.server = server;
         this.ip = ip;
@@ -40,6 +52,7 @@ public class Connection extends Thread{
         mes = "";
         cond = Condivisa.getInstance();
         ct = new ThreadChat();
+        frame = cond.getFrame();
     }
 
     @Override
@@ -50,7 +63,8 @@ public class Connection extends Thread{
         if (params[0].equals("y")){
             otherNick = params[1];
             connection = true;
-            System.out.println("Connessione stabilita");
+            frame.makePopUp("Connection enstablished with " + otherNick);
+            frame.connesso();
             ct.start();
             sendMessage(server, "y;", ip);
             try {
@@ -62,7 +76,7 @@ public class Connection extends Thread{
                 if (tosend){
                     if (mes.equals("exitChat")){
                         sendMessage(server, "e;", ip);
-                        ct.setChatalive(false);
+                        connection = false;
                     } else {
                         sendMessage(server, "m;"+mes, ip);
                         Message tmp = new Message(nickname, mes);
@@ -80,13 +94,18 @@ public class Connection extends Thread{
                             connection = false;
                             cond.clearMessages();
                         } else if (args[0].equals("c")){
-                            sendMessage(server, "n;", ip);
+                            sendMessage(server, "n;", replyPacket.getAddress().toString());
                         }
                     }
                 }
             }
+            frame.makePopUp("Disconnected");
+            frame.disconesso();
         } else if(params[0].equals("n")){
-            System.out.println("Connessione Declinata");
+            frame.makePopUp("Connection declined");
+            frame.iscon = false;
+        } else if(params[0].equals("c")){
+            sendMessage(server, "n;", replyPacket.getAddress().toString());
         }
     }
     
@@ -110,7 +129,7 @@ public class Connection extends Thread{
         boolean dontRecieve = false;
         byte[] replyBuff = new byte[1500];
         
-        DatagramPacket replyPacket = new DatagramPacket(replyBuff, replyBuff.length);
+        replyPacket = new DatagramPacket(replyBuff, replyBuff.length);
 
         try {
             server.receive(replyPacket);
@@ -130,5 +149,73 @@ public class Connection extends Thread{
 
     public boolean isConnection() {
         return connection;
+    }
+
+    public DatagramSocket getServer() {
+        return server;
+    }
+
+    public String getIp() {
+        return ip;
+    }
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    public String getOtherNick() {
+        return otherNick;
+    }
+
+    public boolean isTosend() {
+        return tosend;
+    }
+
+    public String getMes() {
+        return mes;
+    }
+
+    public Condivisa getCond() {
+        return cond;
+    }
+
+    public ThreadChat getCt() {
+        return ct;
+    }
+
+    public void setServer(DatagramSocket server) {
+        this.server = server;
+    }
+
+    public void setIp(String ip) {
+        this.ip = ip;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public void setOtherNick(String otherNick) {
+        this.otherNick = otherNick;
+    }
+
+    public void setConnection(boolean connection) {
+        this.connection = connection;
+    }
+
+    public void setTosend(boolean tosend) {
+        this.tosend = tosend;
+    }
+
+    public void setMes(String mes) {
+        this.mes = mes;
+    }
+
+    public void setCond(Condivisa cond) {
+        this.cond = cond;
+    }
+
+    public void setCt(ThreadChat ct) {
+        this.ct = ct;
     }
 }

@@ -13,32 +13,19 @@ import java.util.ArrayList;
  */
 public class ThreadChat extends Thread{
     Condivisa cond;
-    boolean chatalive;
-    ArrayList<Message> msg;
+    ChatFrame frame;
 
     public ThreadChat() {
         cond = Condivisa.getInstance();
-        chatalive = true;
-        msg = new ArrayList<Message>();
+        frame = cond.getFrame();
     }
 
     @Override
     public void run() {
-        while (chatalive){
+        while (true){
             if (cond.checkNew()){
-                msg = cond.getChatmessages();
-                System.out.println("CHAT:");
-                System.out.println("-------------");
-                for (int i = 0; i < msg.size(); i++){
-                    System.out.println(msg.get(i).getNickname() + ":");
-                    System.out.println(msg.get(i).getMessaggio());
-                }
-                System.out.println("-------------");
+                frame.setChat(cond.getChatmessages());
             }
         }
-    }
-
-    public void setChatalive(boolean chatalive) {
-        this.chatalive = chatalive;
     }
 }

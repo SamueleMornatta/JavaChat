@@ -7,8 +7,13 @@ package chat;
 
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -21,10 +26,17 @@ public class ChatFrame extends javax.swing.JFrame {
      */
     DatagramSocket server;
     Condivisa cond;
+    Connection con;
+    boolean iscon;
+    String nickname;
     public ChatFrame() throws SocketException {
         initComponents();
         server = new DatagramSocket(2003);
-        cond = Condivisa.getInstance();
+        cond = new Condivisa(this);
+        con = new Connection();
+        this.setTitle("Java Chat");
+        iscon = false;
+        nickname = "anonymous";
     }
 
     /**
@@ -37,17 +49,50 @@ public class ChatFrame extends javax.swing.JFrame {
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
+        Terminate = new javax.swing.JButton();
         Connessione = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
+        TxtNickname = new javax.swing.JLabel();
+        btnChange = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        ChatList = new javax.swing.JList<>();
+        TxtMessaggio = new javax.swing.JTextField();
+        btnInvia = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowOpened(java.awt.event.WindowEvent evt) {
+                formWindowOpened(evt);
+            }
+        });
 
-        jPanel1.setBackground(new java.awt.Color(153, 51, 255));
+        jPanel1.setBackground(new java.awt.Color(255, 0, 0));
         jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        Connessione.setText("Richiedi Connessione");
+        Terminate.setText("Cancel Connection");
+        Terminate.setEnabled(false);
+        Terminate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                TerminateActionPerformed(evt);
+            }
+        });
+
+        Connessione.setText("Connection Request");
         Connessione.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 ConnessioneActionPerformed(evt);
+            }
+        });
+
+        jLabel1.setText("Nickname:");
+        jLabel1.setToolTipText("");
+
+        TxtNickname.setText("anonymous");
+
+        btnChange.setText("Change Nickname");
+        btnChange.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnChangeActionPerformed(evt);
             }
         });
 
@@ -56,41 +101,152 @@ public class ChatFrame extends javax.swing.JFrame {
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(Connessione)
-                .addContainerGap(768, Short.MAX_VALUE))
+                .addGap(173, 173, 173)
+                .addComponent(Terminate)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 332, Short.MAX_VALUE)
+                .addComponent(btnChange, javax.swing.GroupLayout.PREFERRED_SIZE, 131, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(TxtNickname)
+                .addContainerGap())
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addGap(16, 16, 16)
+                    .addComponent(Connessione)
+                    .addContainerGap(758, Short.MAX_VALUE)))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(Connessione, javax.swing.GroupLayout.DEFAULT_SIZE, 31, Short.MAX_VALUE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(btnChange, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(Terminate, javax.swing.GroupLayout.DEFAULT_SIZE, 31, Short.MAX_VALUE)
+                        .addComponent(jLabel1)
+                        .addComponent(TxtNickname)))
                 .addContainerGap())
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(Connessione, javax.swing.GroupLayout.DEFAULT_SIZE, 31, Short.MAX_VALUE)
+                    .addContainerGap()))
         );
+
+        ChatList.setEnabled(false);
+        jScrollPane1.setViewportView(ChatList);
+
+        TxtMessaggio.setEnabled(false);
+
+        btnInvia.setText("Send");
+        btnInvia.setEnabled(false);
+        btnInvia.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnInviaActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 403, Short.MAX_VALUE)
+                        .addComponent(TxtMessaggio))
+                    .addComponent(btnInvia))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 352, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 268, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(TxtMessaggio, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnInvia)
+                .addGap(0, 28, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void TerminateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_TerminateActionPerformed
+        if (iscon){
+            con.setMessaggio("exitChat");
+        }
+    }//GEN-LAST:event_TerminateActionPerformed
+
     private void ConnessioneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ConnessioneActionPerformed
-        Connection con = new Connection(server,"172.22.193.27","Eternal");
-        con.start();
-        System.out.println("Richiesta inviata");
-        System.out.println("Aspettare conferma connessione");
+        String ip = JOptionPane.showInputDialog("Enter the IP of the user you want to comunicate with");
+        if (!(ip.equals(""))){
+            con = new Connection(server,ip,nickname);
+            con.start();
+            iscon = true;
+        }
     }//GEN-LAST:event_ConnessioneActionPerformed
 
+    private void btnInviaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInviaActionPerformed
+        if (iscon){
+            con.setMessaggio(TxtMessaggio.getText());
+        }
+    }//GEN-LAST:event_btnInviaActionPerformed
+
+    private void formWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
+        nickname = JOptionPane.showInputDialog("Enter your nickname");
+        TxtNickname.setText(nickname);
+        CheckForConnections();
+    }//GEN-LAST:event_formWindowOpened
+
+    private void btnChangeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnChangeActionPerformed
+        nickname = JOptionPane.showInputDialog("Enter your nickname");
+        TxtNickname.setText(nickname);
+    }//GEN-LAST:event_btnChangeActionPerformed
+
+    public void CheckForConnections(){
+        Listener l = new Listener(server,nickname);
+        l.start();
+    }
+    
+    public String makePopUpInput(String nick){
+        String choice = JOptionPane.showInputDialog("You received a connection from "+nick+", do you wish to accept? Y/N");
+        return choice;
+    }
+    public void connesso(){
+        Terminate.setEnabled(true);
+        Connessione.setEnabled(false);
+        TxtMessaggio.setEnabled(true);
+        ChatList.setEnabled(true);
+        btnInvia.setEnabled(true);
+        iscon = true;
+    }
+    public void disconesso(){
+        Terminate.setEnabled(false);
+        Connessione.setEnabled(true);
+        TxtMessaggio.setEnabled(false);
+        ChatList.setEnabled(false);
+        btnInvia.setEnabled(false);
+        iscon = false;
+        DefaultListModel listModel = new DefaultListModel();
+        ChatList.setModel(listModel);
+        TxtMessaggio.setText("");
+    }
+    public void makePopUp(String text){
+        JOptionPane.showMessageDialog(null, text);
+    }
+    public void setChat(ArrayList<Message> msg){
+        DefaultListModel listModel = new DefaultListModel();
+        for (int i = 0; i < msg.size();i++){
+            listModel.addElement(msg.get(i).getNickname() + ": " + msg.get(i).getMessaggio());
+        }
+        ChatList.setModel(listModel);
+    }
     /**
      * @param args the command line arguments
      */
@@ -131,7 +287,15 @@ public class ChatFrame extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JList<String> ChatList;
     private javax.swing.JButton Connessione;
+    private javax.swing.JButton Terminate;
+    private javax.swing.JTextField TxtMessaggio;
+    private javax.swing.JLabel TxtNickname;
+    private javax.swing.JButton btnChange;
+    private javax.swing.JButton btnInvia;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JScrollPane jScrollPane1;
     // End of variables declaration//GEN-END:variables
 }
