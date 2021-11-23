@@ -28,6 +28,7 @@ public class Connection extends Thread{
     boolean tosend;
     String mes;
     Condivisa cond;
+    ThreadChat ct;
 
     public Connection(DatagramSocket server, String ip, String nickname) {
         this.server = server;
@@ -38,17 +39,19 @@ public class Connection extends Thread{
         tosend = false;
         mes = "";
         cond = Condivisa.getInstance();
+        ct = new ThreadChat();
     }
 
     @Override
     public void run() {
         sendMessage(server, "c;"+nickname+";", ip);
         String message = recieveMessage(server);
-        String text[] = message.split("|");
-        String params[] = text[0].split(";");
+        String params[] = message.split(";");
         if (params[0].equals("y")){
             otherNick = params[1];
             connection = true;
+            System.out.println("Connessione stabilita");
+            ct.start();
             sendMessage(server, "y;", ip);
             try {
                 server.setSoTimeout(500);
@@ -57,31 +60,33 @@ public class Connection extends Thread{
             }
             while (connection){
                 if (tosend){
-                    if (mes == "exitChat"){
+                    if (mes.equals("exitChat")){
                         sendMessage(server, "e;", ip);
+                        ct.setChatalive(false);
                     } else {
-                        sendMessage(server, mes, ip);
-                        Message tmp = new Message(mes, nickname);
+                        sendMessage(server, "m;"+mes, ip);
+                        Message tmp = new Message(nickname, mes);
                         cond.appendMessage(tmp);
                     }
                     tosend = false;
                 } else {
                     String reply = recieveMessage(server);
                     if (!(reply.equals(""))){
-                        String rp[] = reply.split("|");
-                        String args[] = rp[0].split(";");
+                        String args[] = reply.split(";");
                         if (args[0].equals("m")){
-                            Message tmp = new Message(args[1], otherNick);
+                            Message tmp = new Message(otherNick, args[1]);
                             cond.appendMessage(tmp);
                         } else if (args[0].equals("e")){
                             connection = false;
                             cond.clearMessages();
                         } else if (args[0].equals("c")){
-                            sendMessage(server, "n;", rp[1]);
+                            sendMessage(server, "n;", ip);
                         }
                     }
                 }
             }
+        } else if(params[0].equals("n")){
+            System.out.println("Connessione Declinata");
         }
     }
     
@@ -115,12 +120,15 @@ public class Connection extends Thread{
         if (dontRecieve == false){
             byte[] receivedData = replyPacket.getData();
             message = new String(receivedData);
-            message += "|" + replyPacket.getAddress().toString();
         }
         return message;
     }
     public void setMessaggio(String messaggio){
         mes = messaggio;
         tosend = true;
+    }
+
+    public boolean isConnection() {
+        return connection;
     }
 }

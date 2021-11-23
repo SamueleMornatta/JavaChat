@@ -24,17 +24,17 @@ public class Condivisa {
         }
         return instance;
     }
-    public void appendMessage(Message nuovo){
+    public synchronized void appendMessage(Message nuovo){
         chatmessages.add(nuovo);
         isnew = true;
     }
-    public ArrayList<Message> getChatmessages() {
+    public synchronized ArrayList<Message> getChatmessages() {
         return chatmessages;
     }
-    public void clearMessages(){
+    public synchronized void clearMessages(){
         chatmessages.clear();
     }
-    public boolean checkNew(){
+    public synchronized boolean checkNew(){
         boolean tmp = isnew;
         isnew = false;
         return tmp;
