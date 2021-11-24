@@ -65,7 +65,10 @@ public class Connection extends Thread{
             connection = true;
             frame.makePopUp("Connection enstablished with " + otherNick);
             frame.connesso();
-            ct.start();
+            if (!frame.ischaton){
+                ct.start();
+                frame.ChatActivated();
+            }
             sendMessage(server, "y;", ip);
             try {
                 server.setSoTimeout(500);

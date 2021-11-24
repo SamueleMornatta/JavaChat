@@ -55,8 +55,13 @@ public class Listener extends Thread{
             if (frame.iscon == false){
                 String message = recieveMessage(server);
                 if (!(message.equals(""))){
+                    try {
+                        server.setSoTimeout(10000);
+                    } catch (SocketException ex) {
+                        Logger.getLogger(Listener.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                     ip = replyPacket.getAddress().toString();
-                    ip = ip.replace("/", "");
+                    ip = ip.substring(1);
                     String params[] = message.split(";");
                     if (params[0].equals("c")){
                         otherNick = params[1];
@@ -66,10 +71,18 @@ public class Listener extends Thread{
                             String check = recieveMessage(server);
                             String carg[] = check.split(";");
                             if (carg[0].equals("y")){
+                                try {
+                                    server.setSoTimeout(500);
+                                } catch (SocketException ex) {
+                                    Logger.getLogger(Listener.class.getName()).log(Level.SEVERE, null, ex);
+                                }
                                 connection = true;
                                 frame.makePopUp("Connection enstablished with " + otherNick);
                                 frame.connesso();
-                                ct.start();
+                                if (!frame.ischaton){
+                                    ct.start();
+                                    frame.ChatActivated();
+                                }
                                 while (connection){
                                     if (tosend){
                                         if (mes.equals("exitChat")){
@@ -104,13 +117,13 @@ public class Listener extends Thread{
                                 frame.disconesso();
                                 connection = false;
                             } else if (carg[0].equals("c")){
-                                sendMessage(server, "n;", replyPacket.getAddress().toString());
+                                sendMessage(server, "n;", ip);
                             }
                         } else if (response.toUpperCase().equals("N")){
                             sendMessage(server, "n;", ip);
                         }
                     }
-                } 
+                }
             }
         } 
     }
@@ -146,5 +159,9 @@ public class Listener extends Thread{
             message = new String(receivedData);
         }
         return message;
+    }
+    public void setMessaggio(String messaggio){
+        mes = messaggio;
+        tosend = true;
     }
 }

@@ -29,6 +29,8 @@ public class ChatFrame extends javax.swing.JFrame {
     Connection con;
     boolean iscon;
     String nickname;
+    Listener l;
+    boolean ischaton;
     public ChatFrame() throws SocketException {
         initComponents();
         server = new DatagramSocket(2003);
@@ -37,6 +39,7 @@ public class ChatFrame extends javax.swing.JFrame {
         this.setTitle("Java Chat");
         iscon = false;
         nickname = "anonymous";
+        ischaton=false;
     }
 
     /**
@@ -60,6 +63,8 @@ public class ChatFrame extends javax.swing.JFrame {
         btnInvia = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setPreferredSize(new java.awt.Dimension(624, 439));
+        setResizable(false);
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowOpened(java.awt.event.WindowEvent evt) {
                 formWindowOpened(evt);
@@ -103,13 +108,13 @@ public class ChatFrame extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(173, 173, 173)
                 .addComponent(Terminate)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 332, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(btnChange, javax.swing.GroupLayout.PREFERRED_SIZE, 131, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(TxtNickname)
-                .addContainerGap())
+                .addContainerGap(35, Short.MAX_VALUE))
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(jPanel1Layout.createSequentialGroup()
                     .addGap(16, 16, 16)
@@ -134,7 +139,6 @@ public class ChatFrame extends javax.swing.JFrame {
                     .addContainerGap()))
         );
 
-        ChatList.setEnabled(false);
         jScrollPane1.setViewportView(ChatList);
 
         TxtMessaggio.setEnabled(false);
@@ -155,11 +159,12 @@ public class ChatFrame extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 403, Short.MAX_VALUE)
-                        .addComponent(TxtMessaggio))
-                    .addComponent(btnInvia))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1)
+                    .addComponent(TxtMessaggio)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(btnInvia, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -171,15 +176,18 @@ public class ChatFrame extends javax.swing.JFrame {
                 .addComponent(TxtMessaggio, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnInvia)
-                .addGap(0, 28, Short.MAX_VALUE))
+                .addGap(0, 62, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void TerminateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_TerminateActionPerformed
-        if (iscon){
+        if (con.connection){
             con.setMessaggio("exitChat");
+        }
+        else {
+            l.setMessaggio("exitChat");
         }
     }//GEN-LAST:event_TerminateActionPerformed
 
@@ -193,8 +201,12 @@ public class ChatFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_ConnessioneActionPerformed
 
     private void btnInviaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInviaActionPerformed
-        if (iscon){
+        if (con.connection){
             con.setMessaggio(TxtMessaggio.getText());
+            TxtMessaggio.setText("");
+        } else {
+            l.setMessaggio(TxtMessaggio.getText());
+            TxtMessaggio.setText("");
         }
     }//GEN-LAST:event_btnInviaActionPerformed
 
@@ -210,7 +222,7 @@ public class ChatFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_btnChangeActionPerformed
 
     public void CheckForConnections(){
-        Listener l = new Listener(server,nickname);
+        l = new Listener(server,nickname);
         l.start();
     }
     
@@ -246,6 +258,9 @@ public class ChatFrame extends javax.swing.JFrame {
             listModel.addElement(msg.get(i).getNickname() + ": " + msg.get(i).getMessaggio());
         }
         ChatList.setModel(listModel);
+    }
+    public void ChatActivated(){
+        ischaton = true;
     }
     /**
      * @param args the command line arguments
