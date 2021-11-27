@@ -191,12 +191,23 @@ public class ChatFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_TerminateActionPerformed
 
+    public static boolean validate(final String ip) {
+        String PATTERN = "^((0|1\\d?\\d?|2[0-4]?\\d?|25[0-5]?|[3-9]\\d?)\\.){3}(0|1\\d?\\d?|2[0-4]?\\d?|25[0-5]?|[3-9]\\d?)$";
+
+        return ip.matches(PATTERN);
+    }
+    
     private void ConnessioneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ConnessioneActionPerformed
         String ip = JOptionPane.showInputDialog("Enter the IP of the user you want to comunicate with");
-        if (!(ip.equals(""))){
+        if (ip != null){
+           if (!(ip.equals("")) && validate(ip)){
             con = new Connection(server,ip,nickname);
             con.start();
             iscon = true;
+            }
+            else {
+                JOptionPane.showMessageDialog(null, "Nessun indirizzo valido inserito");
+            } 
         }
     }//GEN-LAST:event_ConnessioneActionPerformed
 
@@ -230,20 +241,22 @@ public class ChatFrame extends javax.swing.JFrame {
         String choice = JOptionPane.showInputDialog("You received a connection from "+nick+", do you wish to accept? Y/N");
         return choice;
     }
-    public void connesso(){
+    public synchronized void connesso(){
         Terminate.setEnabled(true);
         Connessione.setEnabled(false);
         TxtMessaggio.setEnabled(true);
         ChatList.setEnabled(true);
         btnInvia.setEnabled(true);
+        btnChange.setEnabled(false);
         iscon = true;
     }
-    public void disconesso(){
+    public synchronized void disconesso(){
         Terminate.setEnabled(false);
         Connessione.setEnabled(true);
         TxtMessaggio.setEnabled(false);
         ChatList.setEnabled(false);
         btnInvia.setEnabled(false);
+        btnChange.setEnabled(true);
         iscon = false;
         DefaultListModel listModel = new DefaultListModel();
         ChatList.setModel(listModel);

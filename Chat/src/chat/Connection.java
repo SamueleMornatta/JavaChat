@@ -58,6 +58,11 @@ public class Connection extends Thread{
     @Override
     public void run() {
         sendMessage(server, "c;"+nickname+";", ip);
+        try {
+            server.setSoTimeout(10000);
+        } catch (SocketException ex) {
+            Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
+        }
         String message = recieveMessage(server);
         String params[] = message.split(";");
         if (params[0].equals("y")){
@@ -104,6 +109,7 @@ public class Connection extends Thread{
             }
             frame.makePopUp("Disconnected");
             frame.disconesso();
+            frame.iscon = false;
         } else if(params[0].equals("n")){
             frame.makePopUp("Connection declined");
             frame.iscon = false;

@@ -63,65 +63,69 @@ public class Listener extends Thread{
                     ip = replyPacket.getAddress().toString();
                     ip = ip.substring(1);
                     String params[] = message.split(";");
+                    String response = "";
                     if (params[0].equals("c")){
                         otherNick = params[1];
-                        String response = frame.makePopUpInput(otherNick);
-                        if (response.toUpperCase().equals("Y")){
-                            sendMessage(server, "y;"+nickname, ip);
-                            String check = recieveMessage(server);
-                            String carg[] = check.split(";");
-                            if (carg[0].equals("y")){
-                                try {
-                                    server.setSoTimeout(500);
-                                } catch (SocketException ex) {
-                                    Logger.getLogger(Listener.class.getName()).log(Level.SEVERE, null, ex);
-                                }
-                                connection = true;
-                                frame.makePopUp("Connection enstablished with " + otherNick);
-                                frame.connesso();
-                                if (!frame.ischaton){
-                                    ct.start();
-                                    frame.ChatActivated();
-                                }
-                                while (connection){
-                                    if (tosend){
-                                        if (mes.equals("exitChat")){
-                                            sendMessage(server, "e;", ip);
-                                            connection = false;
-                                        } else {
-                                            sendMessage(server, "m;"+mes, ip);
-                                            Message tmp = new Message(nickname, mes);
-                                            cond.appendMessage(tmp);
-                                        }
-                                        tosend = false;
-                                    } else {
-                                        String reply = recieveMessage(server);
-                                        if (!(reply.equals(""))){
-                                            String args[] = reply.split(";");
-                                            if (args[0].equals("m")){
-                                                Message tmp = new Message(otherNick, args[1]);
-                                                cond.appendMessage(tmp);
-                                            } else if (args[0].equals("e")){
+                        do
+                        {
+                            response = frame.makePopUpInput(otherNick);
+                            if (response.toUpperCase().equals("Y")){
+                                sendMessage(server, "y;"+nickname, ip);
+                                String check = recieveMessage(server);
+                                String carg[] = check.split(";");
+                                if (carg[0].equals("y")){
+                                    try {
+                                        server.setSoTimeout(500);
+                                    } catch (SocketException ex) {
+                                        Logger.getLogger(Listener.class.getName()).log(Level.SEVERE, null, ex);
+                                    }
+                                    connection = true;
+                                    frame.makePopUp("Connection enstablished with " + otherNick);
+                                    frame.connesso();
+                                    if (!frame.ischaton){
+                                        ct.start();
+                                        frame.ChatActivated();
+                                    }
+                                    while (connection){
+                                        if (tosend){
+                                            if (mes.equals("exitChat")){
+                                                sendMessage(server, "e;", ip);
                                                 connection = false;
-                                                cond.clearMessages();
-                                            } else if (args[0].equals("c")){
-                                                sendMessage(server, "n;", replyPacket.getAddress().toString());
+                                            } else {
+                                                sendMessage(server, "m;"+mes, ip);
+                                                Message tmp = new Message(nickname, mes);
+                                                cond.appendMessage(tmp);
+                                            }
+                                            tosend = false;
+                                        } else {
+                                            String reply = recieveMessage(server);
+                                            if (!(reply.equals(""))){
+                                                String args[] = reply.split(";");
+                                                if (args[0].equals("m")){
+                                                    Message tmp = new Message(otherNick, args[1]);
+                                                    cond.appendMessage(tmp);
+                                                } else if (args[0].equals("e")){
+                                                    connection = false;
+                                                    cond.clearMessages();
+                                                } else if (args[0].equals("c")){
+                                                    sendMessage(server, "n;", replyPacket.getAddress().toString());
+                                                }
                                             }
                                         }
                                     }
+                                    frame.makePopUp("Disconnected");
+                                    frame.disconesso();
+                                } else if (carg[0].equals("n")){
+                                    frame.makePopUp("Check Declined, Disconnected");
+                                    frame.disconesso();
+                                    connection = false;
+                                } else if (carg[0].equals("c")){
+                                    sendMessage(server, "n;", ip);
                                 }
-                                frame.makePopUp("Disconnected");
-                                frame.disconesso();
-                            } else if (carg[0].equals("n")){
-                                frame.makePopUp("Check Declined, Disconnected");
-                                frame.disconesso();
-                                connection = false;
-                            } else if (carg[0].equals("c")){
+                            } else if (response.toUpperCase().equals("N")){
                                 sendMessage(server, "n;", ip);
                             }
-                        } else if (response.toUpperCase().equals("N")){
-                            sendMessage(server, "n;", ip);
-                        }
+                        } while (!(response.toUpperCase().equals("Y")) && !(response.toUpperCase().equals("N")));
                     }
                 }
             }
