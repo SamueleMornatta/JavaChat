@@ -26,17 +26,14 @@ public class Connection extends Thread{
     String nickname;
     String otherNick;
     boolean connection;
-    boolean tosend;
     String mes;
     Condivisa cond;
     ThreadChat ct;
     ChatFrame frame;
-    DatagramPacket replyPacket;
     
     public Connection(){
         otherNick = "unkown";
         connection = false;
-        tosend = false;
         mes = "";
         cond = Condivisa.getInstance();
         ct = new ThreadChat();
@@ -48,7 +45,6 @@ public class Connection extends Thread{
         this.nickname = nickname;
         otherNick = "unkown";
         connection = false;
-        tosend = false;
         mes = "";
         cond = Condivisa.getInstance();
         ct = new ThreadChat();
@@ -57,103 +53,62 @@ public class Connection extends Thread{
 
     @Override
     public void run() {
-        sendMessage(server, "c;"+nickname+";", ip);
-        try {
-            server.setSoTimeout(10000);
-        } catch (SocketException ex) {
-            Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        String message = recieveMessage(server);
-        String params[] = message.split(";");
-        if (params[0].equals("y")){
-            otherNick = params[1];
-            connection = true;
-            frame.makePopUp("Connection enstablished with " + otherNick);
-            frame.connesso();
-            if (!frame.ischaton){
-                ct.start();
-                frame.ChatActivated();
-            }
-            sendMessage(server, "y;", ip);
-            try {
-                server.setSoTimeout(500);
-            } catch (SocketException ex) {
-                Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            while (connection){
-                if (tosend){
-                    if (mes.equals("exitChat")){
-                        sendMessage(server, "e;", ip);
-                        connection = false;
-                    } else {
-                        sendMessage(server, "m;"+mes, ip);
-                        Message tmp = new Message(nickname, mes);
-                        cond.appendMessage(tmp);
+        while (true) {
+            String message = ConnectionUtils.recieveMessage(server);
+            String params[] = message.split(";");
+            System.out.println(message);
+            if (connection == true){
+                if (params[0].equals("y")){
+                    otherNick = params[1];
+                    connection = true;
+                    frame.makePopUp("Connection enstablished with " + otherNick);
+                    frame.connesso();
+                    if (!frame.ischaton){
+                        ct.start();
+                        frame.ChatActivated();
                     }
-                    tosend = false;
-                } else {
-                    String reply = recieveMessage(server);
-                    if (!(reply.equals(""))){
-                        String args[] = reply.split(";");
-                        if (args[0].equals("m")){
-                            Message tmp = new Message(otherNick, args[1]);
-                            cond.appendMessage(tmp);
-                        } else if (args[0].equals("e")){
-                            connection = false;
-                            cond.clearMessages();
-                        } else if (args[0].equals("c")){
-                            sendMessage(server, "n;", replyPacket.getAddress().toString());
+                    ConnectionUtils.sendMessage(server, "y;", ip, nickname);
+                } else if(params[0].equals("n")){
+                    frame.makePopUp("Connection declined");
+                    connection = false;
+                    frame.disconesso();
+                } else if(params[0].equals("c")){
+                    ConnectionUtils.sendMessage(server, "n;", ip, nickname);
+                } else if(params[0].equals("m")){
+                    Message tmp = new Message(otherNick, params[1]);
+                    cond.appendMessage(tmp);
+                } else if (params[0].equals("e")){
+                    connection = false;
+                    cond.clearMessages();
+                    frame.disconesso();
+                }
+            } else {
+                if (params[0].equals("c")){
+                    ip = cond.getRecentIP();
+                    otherNick = params[1];
+                    String response = "";
+                    do
+                    {
+                        response = frame.makePopUpInput(otherNick);
+                        if (response.toUpperCase().equals("Y")){
+                            ConnectionUtils.sendMessage(server, "y;"+nickname, ip, nickname);
+                            frame.connesso();
+                            if (!frame.ischaton){
+                                ct.start();
+                                frame.ChatActivated();
+                            }
+                        } else if (response.toUpperCase().equals("N")){
+                            ConnectionUtils.sendMessage(server, "n;", ip, nickname);
                         }
-                    }
+                    } while (!(response.toUpperCase().equals("Y")) && !(response.toUpperCase().equals("N")));
                 }
             }
-            frame.makePopUp("Disconnected");
-            frame.disconesso();
-            frame.iscon = false;
-        } else if(params[0].equals("n")){
-            frame.makePopUp("Connection declined");
-            frame.iscon = false;
-        } else if(params[0].equals("c")){
-            sendMessage(server, "n;", replyPacket.getAddress().toString());
         }
     }
-    
-    public void sendMessage(DatagramSocket server, String message, String ip){
-        byte[] mesBuff = message.getBytes();
-        DatagramPacket messPacket = new DatagramPacket(mesBuff, mesBuff.length);
-        try {
-            messPacket.setAddress(InetAddress.getByName(ip));
-        } catch (UnknownHostException ex) {
-            Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        messPacket.setPort(2003);
-        try {
-            server.send(messPacket);
-        } catch (IOException ex) {
-            Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-    public String recieveMessage(DatagramSocket server){
-        String message = "";
-        boolean dontRecieve = false;
-        byte[] replyBuff = new byte[1500];
-        
-        replyPacket = new DatagramPacket(replyBuff, replyBuff.length);
-
-        try {
-            server.receive(replyPacket);
-        } catch (IOException ex) {
-            dontRecieve = true;
-        }
-        if (dontRecieve == false){
-            byte[] receivedData = replyPacket.getData();
-            message = new String(receivedData);
-        }
-        return message;
-    }
-    public void setMessaggio(String messaggio){
-        mes = messaggio;
-        tosend = true;
+    public void startConnection(){
+        connection = true;
+        frame.connesso();
+        ConnectionUtils.sendMessage(server, "c;"+nickname+";", ip, nickname);
     }
 
     public boolean isConnection() {
@@ -174,10 +129,6 @@ public class Connection extends Thread{
 
     public String getOtherNick() {
         return otherNick;
-    }
-
-    public boolean isTosend() {
-        return tosend;
     }
 
     public String getMes() {
@@ -211,11 +162,7 @@ public class Connection extends Thread{
     public void setConnection(boolean connection) {
         this.connection = connection;
     }
-
-    public void setTosend(boolean tosend) {
-        this.tosend = tosend;
-    }
-
+    
     public void setMes(String mes) {
         this.mes = mes;
     }
