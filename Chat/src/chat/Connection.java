@@ -30,6 +30,7 @@ public class Connection extends Thread{
     Condivisa cond;
     ThreadChat ct;
     ChatFrame frame;
+    boolean alreadyNick;
     
     public Connection(){
         otherNick = "unkown";
@@ -49,6 +50,7 @@ public class Connection extends Thread{
         cond = Condivisa.getInstance();
         ct = new ThreadChat();
         frame = cond.getFrame();
+        alreadyNick = false;
     }
 
     @Override
@@ -59,15 +61,16 @@ public class Connection extends Thread{
             System.out.println(message);
             if (connection == true){
                 if (params[0].equals("y")){
-                    otherNick = params[1];
-                    connection = true;
+                    if (alreadyNick == false){
+                        otherNick = params[1];
+                        ConnectionUtils.sendMessage(server, "y;", ip, nickname);
+                    }
                     frame.makePopUp("Connection enstablished with " + otherNick);
                     frame.connesso();
                     if (!frame.ischaton){
                         ct.start();
                         frame.ChatActivated();
                     }
-                    ConnectionUtils.sendMessage(server, "y;", ip, nickname);
                 } else if(params[0].equals("n")){
                     frame.makePopUp("Connection declined");
                     connection = false;
@@ -80,12 +83,14 @@ public class Connection extends Thread{
                 } else if (params[0].equals("e")){
                     connection = false;
                     cond.clearMessages();
+                    alreadyNick = false;
                     frame.disconesso();
                 }
             } else {
                 if (params[0].equals("c")){
                     ip = cond.getRecentIP();
                     otherNick = params[1];
+                    alreadyNick = true;
                     String response = "";
                     do
                     {
@@ -93,6 +98,7 @@ public class Connection extends Thread{
                         if (response.toUpperCase().equals("Y")){
                             ConnectionUtils.sendMessage(server, "y;"+nickname, ip, nickname);
                             frame.connesso();
+                            connection = true;
                             if (!frame.ischaton){
                                 ct.start();
                                 frame.ChatActivated();

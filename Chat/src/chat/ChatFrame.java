@@ -180,7 +180,11 @@ public class ChatFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void TerminateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_TerminateActionPerformed
+        ip = cond.getRecentIP();
         ConnectionUtils.sendMessage(server,"exitChat",ip,nickname);
+        disconesso();
+        makePopUp("Connection Closed");
+        con.alreadyNick = false;
     }//GEN-LAST:event_TerminateActionPerformed
 
     public static boolean validate(final String ip) {
@@ -203,6 +207,7 @@ public class ChatFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_ConnessioneActionPerformed
 
     private void btnInviaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInviaActionPerformed
+        ip = cond.getRecentIP();
         ConnectionUtils.sendMessage(server, TxtMessaggio.getText(), ip, nickname);
         TxtMessaggio.setText("");
     }//GEN-LAST:event_btnInviaActionPerformed

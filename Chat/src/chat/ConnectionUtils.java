@@ -20,14 +20,17 @@ import java.util.logging.Logger;
 public class ConnectionUtils {
     public ConnectionUtils(){};
     public static void sendMessage(DatagramSocket server, String message, String ip, String nickname){
+        String tmpstr = "";
         if (message.equals("exitChat")){
-            message = "e;";
+            tmpstr = "e;";
         } else if (!message.contains("c;") && !message.contains("y;") && !message.contains("n;")) {
-            message = "m;" + message;
             Message tmp = new Message(nickname, message);
+            tmpstr = "m;" + message;
             Condivisa.getInstance().appendMessage(tmp);
+        } else {
+            tmpstr = message;
         }
-        byte[] mesBuff = message.getBytes();
+        byte[] mesBuff = tmpstr.getBytes();
         DatagramPacket messPacket = new DatagramPacket(mesBuff, mesBuff.length);
         try {
             messPacket.setAddress(InetAddress.getByName(ip));
