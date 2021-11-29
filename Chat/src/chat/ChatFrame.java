@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
-import javax.swing.JButton;
-import javax.swing.JList;
 import javax.swing.JOptionPane;
 
 /**
@@ -27,19 +25,18 @@ public class ChatFrame extends javax.swing.JFrame {
     DatagramSocket server;
     Condivisa cond;
     Connection con;
-    boolean iscon;
     String nickname;
-    Listener l;
     boolean ischaton;
+    String ip;
     public ChatFrame() throws SocketException {
         initComponents();
         server = new DatagramSocket(2003);
         cond = new Condivisa(this);
         con = new Connection();
         this.setTitle("Java Chat");
-        iscon = false;
         nickname = "anonymous";
         ischaton=false;
+        ip = "";
     }
 
     /**
@@ -183,12 +180,11 @@ public class ChatFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void TerminateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_TerminateActionPerformed
-        if (con.connection){
-            con.setMessaggio("exitChat");
-        }
-        else {
-            l.setMessaggio("exitChat");
-        }
+        ip = cond.getRecentIP();
+        ConnectionUtils.sendMessage(server,"exitChat",ip,nickname);
+        disconesso();
+        makePopUp("Connection Closed");
+        con.alreadyNick = false;
     }//GEN-LAST:event_TerminateActionPerformed
 
     public static boolean validate(final String ip) {
@@ -198,12 +194,11 @@ public class ChatFrame extends javax.swing.JFrame {
     }
     
     private void ConnessioneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ConnessioneActionPerformed
-        String ip = JOptionPane.showInputDialog("Enter the IP of the user you want to comunicate with");
+        ip = JOptionPane.showInputDialog("Enter the IP of the user you want to comunicate with");
         if (ip != null){
            if (!(ip.equals("")) && validate(ip)){
-            con = new Connection(server,ip,nickname);
-            con.start();
-            iscon = true;
+               con.setIp(ip);
+               con.startConnection();
             }
             else {
                 JOptionPane.showMessageDialog(null, "Nessun indirizzo valido inserito");
@@ -212,19 +207,16 @@ public class ChatFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_ConnessioneActionPerformed
 
     private void btnInviaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInviaActionPerformed
-        if (con.connection){
-            con.setMessaggio(TxtMessaggio.getText());
-            TxtMessaggio.setText("");
-        } else {
-            l.setMessaggio(TxtMessaggio.getText());
-            TxtMessaggio.setText("");
-        }
+        ip = cond.getRecentIP();
+        ConnectionUtils.sendMessage(server, TxtMessaggio.getText(), ip, nickname);
+        TxtMessaggio.setText("");
     }//GEN-LAST:event_btnInviaActionPerformed
 
     private void formWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
         nickname = JOptionPane.showInputDialog("Enter your nickname");
         TxtNickname.setText(nickname);
-        CheckForConnections();
+        con = new Connection(server,"",nickname);
+        con.start();
     }//GEN-LAST:event_formWindowOpened
 
     private void btnChangeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnChangeActionPerformed
@@ -232,11 +224,6 @@ public class ChatFrame extends javax.swing.JFrame {
         TxtNickname.setText(nickname);
     }//GEN-LAST:event_btnChangeActionPerformed
 
-    public void CheckForConnections(){
-        l = new Listener(server,nickname);
-        l.start();
-    }
-    
     public String makePopUpInput(String nick){
         String choice = JOptionPane.showInputDialog("You received a connection from "+nick+", do you wish to accept? Y/N");
         return choice;
@@ -248,7 +235,6 @@ public class ChatFrame extends javax.swing.JFrame {
         ChatList.setEnabled(true);
         btnInvia.setEnabled(true);
         btnChange.setEnabled(false);
-        iscon = true;
     }
     public synchronized void disconesso(){
         Terminate.setEnabled(false);
@@ -257,7 +243,6 @@ public class ChatFrame extends javax.swing.JFrame {
         ChatList.setEnabled(false);
         btnInvia.setEnabled(false);
         btnChange.setEnabled(true);
-        iscon = false;
         DefaultListModel listModel = new DefaultListModel();
         ChatList.setModel(listModel);
         TxtMessaggio.setText("");

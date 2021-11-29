@@ -16,12 +16,14 @@ public class Condivisa {
     private static ArrayList<Message> chatmessages;
     private static boolean isnew;
     private static ChatFrame frame;
-    private static Condivisa instance = null; 
+    private static Condivisa instance = null;
+    private static String recentip;
     public Condivisa(ChatFrame frame) {
         this.frame = frame;
         chatmessages = new ArrayList<Message>();
         isnew = false;
         instance = this;
+        recentip = "";
     }
     public static Condivisa getInstance() {
         return instance;
@@ -44,5 +46,11 @@ public class Condivisa {
 
     public synchronized ChatFrame getFrame() {
         return frame;
+    }
+    public synchronized void setRecentIP(String ip){
+        recentip = ip;
+    }
+    public synchronized String getRecentIP(){
+        return recentip;
     }
 }
