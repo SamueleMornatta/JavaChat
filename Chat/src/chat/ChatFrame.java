@@ -5,8 +5,14 @@
  */
 package chat;
 
+import java.io.IOException;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,17 +28,16 @@ public class ChatFrame extends javax.swing.JFrame {
     /**
      * Creates new form ChatFrame
      */
-    DatagramSocket server;
+    ServerSocket server;
     Condivisa cond;
     Connection con;
     String nickname;
     boolean ischaton;
     String ip;
-    public ChatFrame() throws SocketException {
+    public ChatFrame() throws SocketException, IOException {
         initComponents();
-        server = new DatagramSocket(2003);
+        server = new ServerSocket(2003);
         cond = new Condivisa(this);
-        con = new Connection();
         this.setTitle("Java Chat");
         nickname = "anonymous";
         ischaton=false;
@@ -181,10 +186,8 @@ public class ChatFrame extends javax.swing.JFrame {
 
     private void TerminateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_TerminateActionPerformed
         ip = cond.getRecentIP();
-        ConnectionUtils.sendMessage(server,"exitChat",ip,nickname);
         disconesso();
         makePopUp("Connection Closed");
-        con.alreadyNick = false;
     }//GEN-LAST:event_TerminateActionPerformed
 
     public static boolean validate(final String ip) {
@@ -197,8 +200,16 @@ public class ChatFrame extends javax.swing.JFrame {
         ip = JOptionPane.showInputDialog("Enter the IP of the user you want to comunicate with");
         if (ip != null){
            if (!(ip.equals("")) && validate(ip)){
-               con.setIp(ip);
-               con.startConnection();
+                try {
+                    Socket tmp = new Socket(InetAddress.getByName(ip), 2003);
+                    ThreadClient thcl = new ThreadClient(tmp, nickname);
+                    thcl.start();
+                    thcl.sendMessage("c;" + nickname);
+                } catch (UnknownHostException ex) {
+                    Logger.getLogger(ChatFrame.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (IOException ex) {
+                    Logger.getLogger(ChatFrame.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
             else {
                 JOptionPane.showMessageDialog(null, "Nessun indirizzo valido inserito");
@@ -208,14 +219,13 @@ public class ChatFrame extends javax.swing.JFrame {
 
     private void btnInviaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInviaActionPerformed
         ip = cond.getRecentIP();
-        ConnectionUtils.sendMessage(server, TxtMessaggio.getText(), ip, nickname);
         TxtMessaggio.setText("");
     }//GEN-LAST:event_btnInviaActionPerformed
 
     private void formWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
         nickname = JOptionPane.showInputDialog("Enter your nickname");
         TxtNickname.setText(nickname);
-        con = new Connection(server,"",nickname);
+        con = new Connection(server, nickname);
         con.start();
     }//GEN-LAST:event_formWindowOpened
 
@@ -293,6 +303,8 @@ public class ChatFrame extends javax.swing.JFrame {
                 try {
                     new ChatFrame().setVisible(true);
                 } catch (SocketException ex) {
+                    Logger.getLogger(ChatFrame.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (IOException ex) {
                     Logger.getLogger(ChatFrame.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }

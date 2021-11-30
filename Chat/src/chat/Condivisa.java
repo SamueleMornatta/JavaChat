@@ -5,6 +5,7 @@
  */
 package chat;
 
+import java.net.Socket;
 import java.util.ArrayList;
 import javax.swing.JFrame;
 
@@ -14,6 +15,8 @@ import javax.swing.JFrame;
  */
 public class Condivisa {
     private static ArrayList<Message> chatmessages;
+    private static ArrayList<Socket> sockets;
+    private static int numSockets;
     private static boolean isnew;
     private static ChatFrame frame;
     private static Condivisa instance = null;
@@ -21,6 +24,7 @@ public class Condivisa {
     public Condivisa(ChatFrame frame) {
         this.frame = frame;
         chatmessages = new ArrayList<Message>();
+        sockets = new ArrayList<Socket>();
         isnew = false;
         instance = this;
         recentip = "";
@@ -52,5 +56,13 @@ public class Condivisa {
     }
     public synchronized String getRecentIP(){
         return recentip;
+    }
+    public synchronized void addSocket(Socket client){
+        sockets.add(client);
+        numSockets++;
+    }
+    public synchronized void removeSocket(int index){
+        sockets.remove(index);
+        numSockets--;
     }
 }
